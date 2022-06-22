@@ -16,4 +16,4 @@ while read LINE; do
   curl -o /dev/null --silent --head --write-out "%{http_code} https://$LINE\n" "$LINE"
 done < statuscode.txt
 
-# statuscode.txt là file list domain
+# statuscode.txt la file list domain

@@ -1,4 +1,4 @@
-#!/bin/bash
+#! /bin/bash
 while read LINE; do
   dig +noall +answer $LINE
 done < dig.txt

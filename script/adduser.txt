@@ -1,0 +1,3 @@
+sudo useradd -s /bin/bash -d /home/ngocnt/ -m -G sudo ngocnt
+sudo vi /etc/sudoers.d/ngocnt
+ngocnt ALL=(ALL:ALL) NOPASSWD:ALL 

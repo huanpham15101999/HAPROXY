@@ -1,0 +1,4 @@
+# letsencrypt
+acl letsencrypt_aldrequest path_beg -i /.well-known/acme-challenge/
+use_backend letsencrypt_ald if letsencrypt_aldrequest
+

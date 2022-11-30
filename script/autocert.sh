@@ -9,3 +9,5 @@ while read LINE; do
   echo -e "\e[1;36mstar.$LINE.pem"
   openssl x509 -noout -enddate -in star.$LINE.pem
 done < listcert.txt
+
+rm !("autocert.sh"|"listcert.txt"|*.pem)

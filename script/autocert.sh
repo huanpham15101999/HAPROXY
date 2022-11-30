@@ -6,8 +6,10 @@ for i in `ls`; do mv "$i" "`echo $i | tr '[A-Z]' '[a-z]' | tr '_' '.'`" 2>/dev/n
 
 while read LINE; do
   cat star.$LINE.key.nopass star.$LINE.crt star.$LINE.ca-bundle > star.$LINE.pem
-  echo -e "\e[1;36mstar.$LINE.pem"
+  echo -ne "\e[1;36mstar.$LINE.pem "
   openssl x509 -noout -enddate -in star.$LINE.pem
 done < listcert.txt
 
-rm !("autocert.sh"|"listcert.txt"|*.pem)
+mkdir -p pem
+cp *.pem pem
+

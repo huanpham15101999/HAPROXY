@@ -13,3 +13,10 @@ done < listcert.txt
 mkdir -p pem
 cp *.pem pem
 
+#
+while read LINE; do
+  echo -n "{{ " > $LINE
+  echo -n "$LINE" | tr '.' '_' >> $LINE
+  echo " }}" >> $LINE
+done < listcert.txt
+#

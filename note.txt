@@ -2,3 +2,5 @@
 acl letsencrypt_aldrequest path_beg -i /.well-known/acme-challenge/
 use_backend letsencrypt_ald if letsencrypt_aldrequest
 
+# format config Haproxy
+cat abc.txt | tr -s ' ' | sed 's/^[[:space:]]/\t/g'

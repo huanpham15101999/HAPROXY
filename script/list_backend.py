@@ -11,10 +11,9 @@ def get_backend_list(config_file):
                 backends.append(backend_name)
     return backends
     
-config_file = 'all.txt'
-backends = get_backend_list(config_file)
+list = get_backend_list('all.txt')
 
-for item in backends:
+for item in list:
     print(item)
 
-print(len(backends))
+print(len(list))

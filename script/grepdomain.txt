@@ -1,0 +1,222 @@
+frontend http_ospfnps_151_75_p80
+        bind 123.30.151.75:80
+        mode http
+        capture request header Host len 128
+        capture request header User-Agent len 256
+        capture request header Referer len 128
+        option http-server-close
+
+        acl is_user_agent_tablet        hdr_sub(User-Agent) -i ipad 'Nexus 7' 'Nexus 9' 'Nexus 10' KFTHWI KTU84M JSS15J JZO54K JLS36I N5100 SM-T530 SCH-I800 SM-T837 SM-T555 SGP771 SM-T827 LG-V410 SM-T285 SM-T585
+        acl is_user_agent_mobile        hdr_sub(User-Agent) -i xiaomi iphone mini sony htc moto panasonic sharp philips samsung android nokia blackberry galaxy bb10 mobi/
+        acl is_user_agent_mobile_smart  hdr_sub(User-Agent) -i iphone mini sony htc moto panasonic sharp philips samsung android nokia blackberry galaxy bb10 mobi 'windows phone' windowsphone xiaomi 'Nexus 5X' 'Nexus 4' 'Nexus 5' 'Nexus 6' 'Nexus 6P'
+
+        acl letsencrypt_aldrequest path_beg -i /.well-known/acme-challenge/
+        use_backend letsencrypt_ald if letsencrypt_aldrequest
+
+        acl is_allow_ip src 173.193.24.117 123.30.53.0/24 123.30.215.0/20 222.255.27.0/24 123.30.239.0/24
+        acl is_valid_ip src 69.171.224.0/19 173.252.64.0/18 66.220.144.0/20 204.15.20.0/22 69.63.176.0/20 64.233.160.0/16 66.102.0.0/20 66.249.64.0/19 72.14.192.0/18 74.125.0.0/16 209.85.128.0/16 216.239.32.0/19 123.30.247.0/24 222.255.27.0/24 192.168.0.0/16 123.30.50.23 123.30.50.76 123.30.50.46 64.233.160.0/19 66.102.0.0/20 66.249.64.0/19 72.14.192.0/18 74.125.0.0/16 209.85.128.0/17 216.239.32.0/19 64.4.0.0/18 65.52.0.0/14 131.253.21.0/24 131.253.22.0/23 131.253.24.0/21 131.253.32.0/20 157.60.0.0/16 157.56.0.0/14 157.54.0.0/15 207.46.0.0/16 207.68.128.0/18 207.68.192.0/20 8.0.0.0/8 8.12.144.0/24 66.196.64.0/18 66.228.160.0/19 67.195.0.0/16 68.142.192.0/18 72.30.0.0/16 74.6.0.0/16 202.160.176.0/20 209.191.64.0/18 118.102.1.0/24 123.30.175.0/24 123.30.242.11 123.30.242.179 123.30.242.173 66.249.75.129 66.249.75.147
+        acl is_valid_ip src 222.255.27.220
+        acl bots_facebook hdr_reg(User-Agent) -i facebookexternalhit facebookexternalhit/1.1 facebookplatform
+        acl bot_telegram hdr_sub(User-Agent) -i TelegramBot
+        acl is_check_cookie_browser hdr_sub(cookie) -i browser
+        
+        acl is_giadinh_net hdr(host) -i giadinh.net.vn www.giadinh.net.vn m.giadinh.net.vn www.m.giadinh.net.vn
+        acl blackip_giadinh.net.vn src -f /etc/haproxy/blackip_giadinh.net.vn.lst
+
+        http-request deny if is_giadinh_net blackip_giadinh.net.vn
+        redirect prefix https://giadinh.suckhoedoisong.vn code 301 if is_giadinh_net
+        
+# Start http cafebiz 
+    	acl is_s_cafebiz hdr(host) -i s.cafebiz.vn
+    	acl is_allow_source_ip src 123.30.53.0/24 222.255.27.0/24 123.30.170.0/24 192.168.0.0/16 192.168.144.230 192.168.3.204 10.2.0.0/16 173.193.24.116 173.193.24.114 173.193.24.115 173.193.24.117 173.193.2.248 173.193.2.249 173.193.2.250 173.193.2.251
+        
+    	use_backend http_s_cafebiz if is_s_cafebiz
+
+        acl is_web_cafebiz hdr(host) -i cafebiz.vn
+        acl is_m_cafebiz hdr(host) -i m.cafebiz.vn
+        acl is_www_cafebiz_redirect hdr(host) -i www.cafebiz.vn cafebiz.com.vn
+        acl is_sub_app_cafebiz url_sub          /app/
+
+        redirect prefix https://cafebiz.vn code 302 if is_web_cafebiz bots_facebook
+        redirect prefix https://m.cafebiz.vn code 302 if is_m_cafebiz bots_facebook
+        redirect prefix https://m.cafebiz.vn code 301 if is_web_cafebiz is_user_agent_mobile_smart !is_user_agent_tablet !is_check_cookie_browser
+        redirect prefix https://m.cafebiz.vn code 301 if is_m_cafebiz is_sub_app_cafebiz !is_user_agent_mobile_smart !bot_telegram
+        redirect prefix https://cafebiz.vn code 301 if is_m_cafebiz !is_user_agent_mobile_smart !bot_telegram
+	redirect prefix https://m.cafebiz.vn code 301 if is_web_cafebiz is_user_agent_mobile_smart    
+	redirect prefix https://cafebiz.vn code 301 if is_web_cafebiz
+	redirect prefix https://cafebiz.vn code 301 if is_m_cafebiz is_user_agent_tablet
+	redirect prefix https://m.cafebiz.vn code 301 if is_m_cafebiz
+	redirect prefix https://cafebiz.vn code 301 if is_www_cafebiz_redirect
+        redirect prefix https://btv.cafebiz.vn if { hdr(host) -i btv.cafebiz.vn }
+# End http cafebiz	    
+
+# Start http cafef
+        acl is_e_cafef hdr(host) -i e.cafef.vn
+        acl is_web_cafef_redirect hdr(host) -i www.cafef.vn ta.cafef.vn
+        acl is_solieu3_vcmedia hdr(host) -i solieu3.vcmedia.vn solieu3.cafefcdn.com
+        acl is_web_cafebiz hdr(host) -i cafebiz.vn
+	acl is_older_cafef hdr(host) -i older.cafef.vn
+        acl url_s_cafef_dautu path_beg -i /danh-muc-dau-tu.chn /Danh-muc-dau-tu/Lai-lo-0.chn /Danh-muc-dau-tu/Nhat-ky-giao-dich-1.chn /Danh-muc-dau-tu/danh-muc-3.chn
+        acl url_m_cafef_dautu path_beg -i /danh-muc-dau-tu.chn /pages/portfolio/handlerlogin.aspx /pages/portfolio/minglogin.aspx /dang-nhap.chn
+	acl blackip_cafef.vn src -f /etc/haproxy/blackip_cafef.vn.lst
+	            
+        acl is_web_cafef hdr(host) -i cafef.vn
+	http-request deny if is_web_cafef blackip_cafef.vn
+ 
+        use_backend http_charthistory_cafef if { hdr(host) -i charthistory.cafef.vn }
+        use_backend http_md_cafef if { hdr(host) -i md.cafef.vn }
+        use_backend http_solieu3_vcmedia if is_solieu3_vcmedia
+
+        acl is_s_cafef hdr(host) -i s.cafef.vn
+        redirect prefix https://s.cafef.vn code 301 if { hdr(host) -i s.cafef.vn }
+
+        
+        use_backend http_e_cafef if is_e_cafef
+        redirect prefix https://cafef.vn code 301 if { hdr(host) -i www.cafef.vn }
+        redirect prefix https://app.cafef.vn code 301 if { hdr(host) -i app.cafef.vn www.app.cafef.vn }
+        redirect prefix https://btv.cafef.vn code 301 if { hdr(host) -i btv.cafef.vn }
+
+        http-request redirect prefix https://dev-s.cafef.vn code 301 if { hdr(host) -i dev-s.cafef.vn }
+        http-request redirect prefix https://dev2-s.cafef.vn code 301 if { hdr(host) -i dev2-s.cafef.vn }
+
+        acl is_m_cafef hdr(host) -i m.cafef.vn
+	http-request deny if is_m_cafef blackip_cafef.vn 
+        
+	redirect prefix https://m.cafef.vn code 301 if is_web_cafef is_user_agent_mobile_smart !is_user_agent_tablet !is_check_cookie_browser 
+        redirect prefix https://cafef.vn code 301 if is_web_cafef_redirect
+        redirect prefix https://cafef.vn code 301 if is_m_cafef !is_user_agent_mobile_smart !bot_telegram
+        redirect prefix https://cafef.vn code 301 if is_m_cafef is_user_agent_tablet
+        redirect prefix https://cafef.vn code 301 if { hdr(host) -i www.cafef.vn }
+  	redirect prefix https://m.cafef.vn code 301 if is_m_cafef
+	redirect prefix https://cafef.vn code 301 if is_web_cafef
+        redirect prefix https://m.cafef.vn code 301 if { hdr(host) -i www.m.cafef.vn }
+        use_backend http_binhchon.cupchienthang.vn if { hdr(host) -i binhchon.cupchienthang.vn }
+# End http cafef
+
+        redirect prefix https://phapluat.suckhoedoisong.vn code 301 if { hdr(host) -i phapluatbandoc.giadinh.net.vn m.phapluatbandoc.giadinh.net.vn }
+        redirect prefix https://app.cafebiz.vn code 301 if { hdr(host) -i app.cafebiz.vn www.app.cafebiz.vn }
+        
+frontend https_ospf_151_75_p443
+        bind 123.30.151.75:443 ssl crt /etc/haproxy/ssl/phapluatbandoc.giadinh.net.vn.pem crt /etc/haproxy/ssl/star.cafebiz.vn.pem crt /etc/haproxy/ssl/m.giadinh.net.vn.pem crt /etc/haproxy/ssl/giadinh.net.vn.pem crt /etc/haproxy/ssl/star.cafef.vn.pem npn http/1.1,spdy/3.1
+        mode http
+        capture request header Host len 128
+        capture request header User-Agent len 256
+        capture request header Referer len 128
+        option http-server-close
+        http-request add-header X-Forwarded-Proto https
+
+        acl letsencrypt_aldrequest path_beg -i /.well-known/acme-challenge/
+        use_backend letsencrypt_ald if letsencrypt_aldrequest
+        
+        acl is_user_agent_tablet       hdr_sub(User-Agent) -i ipad 'Nexus 7' 'Nexus 9' 'Nexus 10' KFTHWI KTU84M JSS15J JZO54K JLS36I N5100 SM-T530 SCH-I800 SM-T837 SM-T555 SGP771 SM-T827 LG-V410 SM-T285 SM-T585
+        acl is_user_agent_mobile       hdr_sub(User-Agent) -i   iphone mini sony htc moto panasonic sharp philips samsung android nokia blackberry galaxy bb10 mobi/
+        acl is_user_agent_mobile_smart  hdr_sub(User-Agent) -i   iphone mini sony htc moto panasonic sharp philips samsung android nokia blackberry galaxy bb10 mobi/
+
+        acl is_allow_ip src 173.193.24.117 123.30.53.0/24 123.30.215.0/20 222.255.27.0/24 123.30.239.0/24
+        acl is_valid_ip src 69.171.224.0/19 173.252.64.0/18 66.220.144.0/20 204.15.20.0/22 69.63.176.0/20 64.233.160.0/16 66.102.0.0/20 66.249.64.0/19 72.14.192.0/18 74.125.0.0/16 209.85.128.0/16 216.239.32.0/19 123.30.247.0/24 222.255.27.0/24 192.168.0.0/16 123.30.50.23 123.30.50.76 123.30.50.46 64.233.160.0/19 66.102.0.0/20 66.249.64.0/19 72.14.192.0/18 74.125.0.0/16 209.85.128.0/17 216.239.32.0/19 64.4.0.0/18 65.52.0.0/14 131.253.21.0/24 131.253.22.0/23 131.253.24.0/21 131.253.32.0/20 157.60.0.0/16 157.56.0.0/14 157.54.0.0/15 207.46.0.0/16 207.68.128.0/18 207.68.192.0/20 8.0.0.0/8 8.12.144.0/24 66.196.64.0/18 66.228.160.0/19 67.195.0.0/16 68.142.192.0/18 72.30.0.0/16 74.6.0.0/16 202.160.176.0/20 209.191.64.0/18 118.102.1.0/24 123.30.175.0/24 123.30.242.11 123.30.242.179 123.30.242.173 66.249.75.129 66.249.75.147
+        acl is_vaild_ip src 222.255.27.220
+
+        acl bots hdr_reg(User-Agent) -i -f /etc/haproxy/botlist.lst
+        acl bot_telegram hdr_sub(User-Agent) -i TelegramBot
+        acl bots_facebook hdr_reg(User-Agent) -i facebookexternalhit facebookexternalhit/1.1 facebookplatform
+        
+        acl is_check_cookie_browser hdr_sub(cookie) -i browser
+        acl blackip_giadinh.net.vn src -f /etc/haproxy/blackip_giadinh.net.vn.lst
+        acl is_giadinh_net hdr(host) -i giadinh.net.vn www.giadinh.net.vn m.giadinh.net.vn www.m.giadinh.net.vn
+
+        redirect prefix https://giadinh.suckhoedoisong.vn code 301 if is_giadinh_net
+        http-request deny if is_giadinh_net blackip_giadinh.net.vn
+
+        use_backend http_app.cafebiz.vn if { hdr(host) -i app.cafebiz.vn }
+        
+# Start https cafef
+        acl is_web_cafef hdr(host) -i cafef.vn
+        acl is_m_cafef hdr(host) -i m.cafef.vn
+        acl blackip_cafef.vn src -f /etc/haproxy/blackip_cafef.vn.lst
+        http-request deny if is_web_cafef blackip_cafef.vn
+	http-request deny if is_m_cafef blackip_cafef.vn
+
+        acl url_s_cafef_dulieu path_beg -i /du-lieu
+        acl is_s_cafef hdr(host) -i s.cafef.vn
+        use_backend http_s_cafef_dulieu if  is_s_cafef is_user_agent_mobile_smart url_s_cafef_dulieu 
+
+        acl is_dulieu_cafef path_beg -i /du-lieu
+        use_backend http_dulieu_cafef if is_m_cafef is_dulieu_cafef !is_user_agent_mobile_smart
+        
+        #acl is_s_cafef_dulieu            path_beg -i     /dulieu
+        #use_backend http_s_cafef_dulieu  if is_s_cafef is_s_cafef_dulieu !is_user_agent_mobile_smart
+        #acl url_s_cafef_dulieu path_beg -i /dulieu
+        #acl is_s_cafef hdr(host) -i s.cafef.vn
+        #use_backend http_s_cafef_dulieu if  is_s_cafef is_user_agent_mobile_smart url_s_cafef_dulieu 
+
+        redirect prefix https://m.cafef.vn if is_web_cafef is_user_agent_mobile_smart !is_user_agent_tablet !is_check_cookie_browser 
+        use_backend http_proxy_m_cafef if is_m_cafef bot_telegram
+        use_backend http_web_cafef if is_web_cafef is_check_cookie_browser
+        use_backend http_web_cafef if is_web_cafef is_valid_ip
+        use_backend http_web_cafef if is_web_cafef bots !is_user_agent_mobile_smart !is_user_agent_tablet
+        use_backend http_ratelimit_cafef if is_web_cafef is_user_agent_tablet
+        use_backend http_ratelimit_cafef if is_web_cafef !is_user_agent_mobile_smart
+
+        redirect prefix https://cafef.vn code 301 if is_m_cafef !is_user_agent_mobile_smart !bot_telegram !is_dulieu_cafef
+        redirect prefix https://cafef.vn code 301 if { hdr(host) -i www.cafef.vn }
+        redirect prefix https://m.cafef.vn code 301 if { hdr(host) -i www.m.cafef.vn }
+
+        use_backend http_m_cafef if is_m_cafef bots !is_user_agent_mobile_smart !is_user_agent_tablet
+        use_backend http_m_cafef if is_m_cafef is_valid_ip       
+        use_backend http_proxy_m_cafef if is_m_cafef is_user_agent_mobile_smart
+        use_backend http_proxy_m_cafef if is_m_cafef
+
+        redirect prefix https://app.cafef.vn code 301 if { hdr(host) -i www.app.cafef.vn }
+        use_backend http_app.cafef.vn if { hdr(host) -i app.cafef.vn }
+        use_backend http_btv.cafef.vn if { hdr(host) -i btv.cafef.vn }
+# End https cafef 
+
+# Start https cafebiz
+        acl is_web_cafebiz hdr(host) -i cafebiz.vn
+        acl is_redirect_cafebiz hdr(host) -i www.cafebiz.vn cafebiz.com.vn
+    	acl is_s_cafebiz hdr(host) -i s.cafebiz.vn
+    	acl is_allow_source_ip src 123.30.53.0/24 222.255.27.0/24 123.30.170.0/24 192.168.0.0/16 192.168.144.230 192.168.3.204 10.2.0.0/16 173.193.24.116 173.193.24.114 173.193.24.115 173.193.24.117 173.193.2.248 173.193.2.249 173.193.2.250 173.193.2.251
+        acl is_m_cafebiz hdr(host) -i m.cafebiz.vn
+        acl is_sub_app_cafebiz url_sub          /app/
+
+	acl blackip_cafebiz.vn src -f /etc/haproxy/blackip_cafebiz.vn.lst
+	http-request deny if is_web_cafebiz blackip_cafebiz.vn
+
+    	use_backend http_s_cafebiz if is_s_cafebiz
+
+        redirect prefix https://m.cafebiz.vn if is_web_cafebiz is_user_agent_mobile_smart !is_user_agent_tablet !is_check_cookie_browser
+        redirect prefix https://cafebiz.vn code 301 if is_m_cafebiz is_user_agent_tablet
+	use_backend http_ratelimit_cafebiz if is_web_cafebiz bots	    
+        use_backend http_web_cafebiz if is_web_cafebiz is_valid_ip
+        use_backend http_web_cafebiz if is_web_cafebiz is_check_cookie_browser
+
+        redirect prefix https://cafebiz.vn if is_redirect_cafebiz
+        use_backend http_ratelimit_cafebiz if is_web_cafebiz is_user_agent_tablet
+        use_backend http_ratelimit_cafebiz if is_web_cafebiz !is_user_agent_mobile_smart
+        
+        acl blackip_cafebiz.vn src -f /etc/haproxy/blackip_cafebiz.vn.lst
+	http-request deny if is_m_cafebiz blackip_cafebiz.vn
+	    
+        redirect prefix https://cafebiz.vn if is_m_cafebiz !is_sub_app_cafebiz !is_user_agent_mobile_smart !bot_telegram
+        
+        use_backend http_proxy_m_cafebiz if is_m_cafebiz bot_telegram
+        use_backend http_proxy_m_cafebiz if is_m_cafebiz bots
+        use_backend http_m_cafebiz if is_m_cafebiz is_valid_ip
+        use_backend http_proxy_m_cafebiz if is_m_cafebiz is_user_agent_mobile_smart
+        use_backend http_proxy_m_cafebiz if is_m_cafebiz
+        use_backend http_ratelimit_cafebiz if is_web_cafebiz
+        acl url_s_cafef_dautu path_beg -i /danh-muc-dau-tu.chn /Danh-muc-dau-tu/Lai-lo-0.chn /Danh-muc-dau-tu/Nhat-ky-giao-dich-1.chn /Danh-muc-dau-tu/danh-muc-3.chn
+        acl is_s_cafef hdr(host) -i s.cafef.vn
+        use_backend http_s_cafef_dautu if url_s_cafef_dautu is_s_cafef
+        use_backend http_s_cafef if is_s_cafef !url_s_cafef_dautu
+        use_backend http_s_cafef if is_s_cafef
+        
+        use_backend http_dev-s.cafef.vn if { hdr(host) -i dev-s.cafef.vn }
+        use_backend http_dev2-s.cafef.vn if { hdr(host) -i dev2-s.cafef.vn }
+
+# End https cafebiz
+
+        redirect prefix https://phapluat.suckhoedoisong.vn code 301 if { hdr(host) -i www.phapluatbandoc.giadinh.net.vn phapluatbandoc.giadinh.net.vn m.phapluatbandoc.giadinh.net.vn }
+        use_backend http_btv.cafebiz.vn	if { hdr(host) -i btv.cafebiz.vn }
+        use_backend http_charthistory_cafef if { hdr(host) -i charthistory.cafef.vn }
+

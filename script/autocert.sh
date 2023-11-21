@@ -1,22 +1,19 @@
-#!/bin/sh
+#!/bin/bash
+for cert in `ls | grep ".key" | awk '{split($0,a,".key"); print a[1]}'`
+do
+  cat $cert.key $cert.cer > $cert.pem
+  echo -ne "\e[0;36m$cert.pem "  
+  checkdate=$(openssl x509 -noout -enddate -in $cert.pem)
+  echo -ne "\e[0;31m$checkdate\n"
+done
 
-unzip '*.zip' > /dev/null 2>&1 && rm -rf *.zip
+if [ ! -d pemfolder ]
+then
+  mkdir -p pemfolder
+else
+  rm -rf pemfolder/*
+fi
 
-for i in `ls`; do mv "$i" "`echo $i | tr '[A-Z]' '[a-z]' | tr '_' '.'`" 2>/dev/null; done
+mv *.pem pemfolder
 
-while read LINE; do
-  cat star.$LINE.key.nopass star.$LINE.crt star.$LINE.ca-bundle > star.$LINE.pem
-  echo -ne "\e[1;36mstar.$LINE.pem "
-  openssl x509 -noout -enddate -in star.$LINE.pem
-done < listcert.txt
-
-mkdir -p pem
-cp *.pem pem
-
-#
-while read LINE; do
-  echo -n "{{ " > $LINE
-  echo -n "$LINE" | tr '.' '_' >> $LINE
-  echo " }}" >> $LINE
-done < listcert.txt
-#
+echo -ne "\e[0;32mAll pem file is in pemfolder\n"
